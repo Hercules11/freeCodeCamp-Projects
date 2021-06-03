@@ -1,5 +1,5 @@
 # [Coding Interview Prep](https://www.freecodecamp.org/learn/coding-interview-prep/)
 
-If you're looking for free coding exercises to prepare for your next job interview, we've got you covered.
+如果你为了工作面试，正在寻找一些编码练习题，那么我们已经为你准备好了。
 
-This section contains hundreds of coding challenges that test your knowledge of algorithms, data structures, and mathematics. It also has a number of take-home projects you can use to strengthen your skills, or add to your portfolio.
+这个章节包含了上百个编码挑战，包括算法、数据结构、数学知识。也有很多居家项目，可以让你强化自己的技能，并添加到你的个人展示栏里。
