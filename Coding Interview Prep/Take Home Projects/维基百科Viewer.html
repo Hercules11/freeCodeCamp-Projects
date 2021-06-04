@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./style/wikiViewer.css">
+    <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+    <title>Wiki Viewer</title>
+</head>
+<body>
+    <main id="wikiapp">
+        <div class="wrapper fullHeight" id="search">
+            <a href="https://en.wikipedia.org/wiki/Special:Random" target="_blank" class="white-text">
+                Click here for a random article
+            </a>
+            <br>
+            <form @submit.prevent="submit()">
+                <input type="text" v-model:value="searchText" />
+                <div class="eks"></div>
+            </form>
+            <p class="white-text" id="help">Click icon to search</p>
+        </div>
+        <div class="wrapper">
+            <ul>
+                <a :href="result.page" target="_blank" v-for="result in results">
+                    <li>
+                        <h1>{{result.title}} </h1>
+                        <p>{{result.body}} </p>
+                    </li>
+                </a>
+            </ul>
+        </div>
+    </main>
+</body>
+<script src="./js/vue.js"></script>
+<script>
+let app = new Vue({
+    el: '#wikiapp',
+    data() {
+        return {
+            searchText: "",
+            results: [],
+        }
+    },
+    // 要在元素挂载之前，进行事件绑定
+    // 在挂载之后，进行运行阶段，没有交互事件
+    created() {
+        let form = $("form");
+        let close = $(".eks");
+        let input = $("input");
+        let search = $("#search");
+        let help = $("#help");
+        close.click(function () {
+            // 对选定元素添加删除类
+            form.toggleClass('open');
+            if(!form.hasClass('open') && app.searchText !== '' && typeof app.searchText !== 'undefined') {
+                app.searchText = '';
+                search.toggleClass('fullHeight');
+                help.toggleClass('hide');
+                app.results = [];
+            }
+
+        })
+        input.on("transitionend webkitTransitionEnd oTransitionEnd", function () {
+        if (form.hasClass("open")) {
+            input.focus();
+        } else {
+            return;
+        }
+        });
+    },
+    methods: {
+        submit() {
+            // 阻止默认提交方式的刷新页面
+            $('#help').addClass('hide');
+            $('#search').removeClass('fullHeight');
+            let api = 'https://en.wikipedia.org/w/api.php?format=json&action=query&generator=search&gsrnamespace=0&gsrlimit=10&prop=pageimages|extracts&pilimit=max&exintro&explaintext&exsentences=1&exlimit=max&gsrsearch=';
+            let cb = '&callback=JSON_CALLBACK';
+            let page = 'https://en.wikipedia.org/?curid=';
+            $.ajax({
+                url: api + this.searchText + cb,
+                dataType: "jsonp",
+                success: function (data) {
+                    // console.log(data.query.pages);
+                    let collections = data.query.pages;
+                    let itemData = [];
+                    for (let [key,value] of Object.entries(collections)) {
+                        // console.log(value);
+                        itemData.push({
+                            title: value.title,
+                            body: value.extract,
+                            page: page + value.pageid,
+                        })
+                    }
+                    // this的指向已经改变
+                    console.log(app);
+                    app.results = itemData;
+
+                }
+
+            })
+        }
+    },
+})
+</script>
+</html>
