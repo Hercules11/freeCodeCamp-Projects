@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet"  href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="./style/useTwitch.css">
+    <title>Use Twitch JSON API</title>
+</head>
+<body>
+    <div id="container">
+        <div class="row" id="header">
+            <h1>Twitch Streamers</h1>
+            <el-select v-model="valSelected" placeholder="all">
+                <el-option
+                v-for="item in options"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+                </el-option>
+            </el-select>
+        </div>
+        <div id="display">
+            <el-card v-for="(item,index) in memberByFiltered" :key="index" class="box-card">
+                <img :src="item.logo" class="image card-item"/>
+                <div class="name card-item">{{ item.name }}</div>
+                <div class="status card-item">{{ item.status }}</div>
+                <div class="game card-item">{{ item.game }}</div>
+                <div class="description card-item">{{ item.description }}</div>
+            </el-card>
+        </div>
+        <div class="row" id="footer"></div>
+    </div>
+
+</body>
+  <!-- import Vue before Element -->
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<!-- 用本地的那个版本,会出错 -->
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script>
+let app = new Vue({
+    el: '#container',
+    data() {
+        return {
+            valSelected: 'all',
+            options: [
+                {value:'all',label:'All'},
+                {value:'online',label:'Online'},
+                {value:'offline',label:'Offline'}
+            ],
+            member: []
+            // 存储数据的数组放在这里,created 后, 生成观察者包装器, 页面拿不到数据, 就八个空元素
+            // 问题出在 请求上, 数据还没拿到, 空对象已经被添加到数组中去了.
+        }
+    },
+    computed: {
+        // 利用计算属性,进行值的过滤
+        memberByFiltered() {
+            return this.member.filter(item => {
+                if (this.valSelected === 'all') {
+                    return true;
+                } else if (this.valSelected === 'online') {
+                    return item.status === 'online';
+                } else {
+                    return item.status === 'offline';
+                }
+            });
+        }
+    },
+    // 原来的问题就出在,变量已经添加进去了,但是数据还没获取到
+    // 解决办法就是, axios.all 并发操作
+    // 或者,通过声明函数为异步操作,到了要执行 await 的请求操作时, 停在这里,
+    async created() {
+        let channels = ["ESL_SC2", "OgamingSC2", "cretetion", "freecodecamp", "storbeck", "habathcx", "RobotCaleb", "noobs2ninjas"];
+        function makeUrl(type, name) {
+            return 'https://twitch-proxy.freecodecamp.rocks/twitch-api/' + type + '/' + name ;
+        }
+        let urlCols = [];
+        for (let item of channels) {
+            urlCols.push({
+                stream: makeUrl('streams', item),
+                channel: makeUrl('channels', item)
+            })
+        }
+        for (let mem of urlCols) {
+            // console.log(mem);
+            let person = {};
+            await axios.get(mem.stream).then(function (response) {
+                // console.log(response.data)
+                let result = response.data;
+                if (result.stream === null) {
+                    person['game'] = "Offline";
+                    person['status'] = 'offline';
+                } else if (result.stream === undefined) {
+                    person['game'] = "Account Closed";
+                    person['status'] = 'offline';
+                } else {
+                    person['game'] = result.stream.game;
+                    person['status'] = 'online';
+                }
+            });
+            await axios.get(mem.channel).then(function (response) {
+                // 查文档进行操作
+                let result = response.data;
+                person['logo'] = result.logo !== null ? result.logo : "https://dummyimage.com/50x50/ecf0e7/5c5457.jpg&text=0x3F";
+                person['name'] = result.display_name !== null ? result.display_name : mem.channel;
+                person['description'] = status === "online" ? ': ' + result.status : '';
+            })
+            // console.log(person)
+            this.member.push(person);
+        }
+    },
+})
+</script>
+</html>
