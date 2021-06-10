@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./style/light.css">
+    <title>Light Bright App</title>
+</head>
+<body>
+<div id="root">
+    <div class="wrapper">
+        <div class="container">
+            <div class="heading">
+                <h1>彩色灯圈</h1>
+                <button @click="handleResetColour">撤销操作</button>
+                <button @click="handleReset">撤销所有</button>
+            </div>
+            <div class="boxes" id="content" @mousedown="handleMouseDown" @mouseup="handleMouseUp" @mousemove="handleMouseMove" @dblclick="handledblClick">
+                <div class="pixel" v-for="num in 513" :value="num" :key="num" :id="num"></div>
+            </div>
+        </div>
+        <section>
+          <p>点击,移动鼠标可点亮光圈</p>
+          <p>双击移除光圈颜色</p>
+          <p>点击"撤销颜色",移除最近一次操作</p>
+          <p>点击"撤销所有"移除所有光圈颜色</p>
+        </section>
+    </div>
+</div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script>
+let app = new Vue({
+    el: "#root",
+    data() {
+        return {
+            lastCircle: [],
+            isDrawing: false,
+        }
+    },
+    methods: {
+        handleResetColour(e) {
+            if (this.lastCircle.length === 0) return;
+            this.lastCircle[this.lastCircle.length - 1].style.background = null;
+            this.lastCircle[this.lastCircle.length - 1].style.boxShadow = null;
+            this.lastCircle.pop();
+        },
+        handleReset(e) {
+            for(let i = this.lastCircle.length - 1; i >= 0; i--) {
+            this.lastCircle[i].style.background = null;
+            this.lastCircle[i].style.boxShadow = null;
+            }
+            this.lastCircle = [];
+        },
+        handleMouseMove(e) {
+            // 监听鼠标，按下左键的时候，绘制光圈
+            // 限制绘制状态下的滑动，同一个元素不点亮
+            if (this.isDrawing) {
+                let target = document.elementFromPoint(e.clientX, e.clientY);;
+                if (target.className !== 'pixel') return;
+                if (target === this.lastCircle[this.lastCircle.length - 1]) return;
+                // 先高亮，再push 进去
+                this.highlight(target, true);
+                this.lastCircle.push(target);
+            }
+        },
+        handleMouseDown(e) {
+            this.isDrawing = true;
+            let target = event.target;
+            if (target.className !== 'pixel') return;
+            this.highlight(target);
+            this.lastCircle.push(target);
+        },
+        handleMouseUp(e) {
+            this.isDrawing = false;
+        },
+        highlight(tar, isMove=false) {
+            if (isMove) {
+                tar.style.background = this.lastCircle[this.lastCircle.length - 1].style.background;
+                tar.style.boxShadow = this.lastCircle[this.lastCircle.length - 1].style.boxShadow;
+                return;
+            }
+            let hex = Math.floor(Math.random() * 0xFFFFFF);
+            // console.log(hex); 13743705
+            let color = "#" + ("000000" + hex.toString(16)).substr(-6);
+            // console.log(color); #96359e
+            tar.style.background = `radial-gradient(circle, rgba(255, 255, 255, 0.88), ${color}, ${color}, ${color})`;
+            tar.style.boxShadow = `1px 1px 22px 3px ${color}, 0px 0px 6px 1px ${color}`;
+        },
+        handledblClick(e) {
+            let target = event.target;
+            if (target.className !== 'pixel') return;
+            // console.log(target);
+            this.removeLight(target);
+        },
+        removeLight(tar) {
+            tar.style.background = null;
+            tar.style.boxShadow = null;
+        },
+    },
+});
+</script>
+</html>
