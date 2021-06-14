@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roguelike Dungeon Crawler</title>
+    <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Raleway'>
+    <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Cormorant+Garamond'>
+    <link rel="stylesheet" href="./style/rouglelike.css">
+</head>
+<body>
+<div id="main">
+    <div class="about" id="enterPanel" v-if="!isPlaying">
+        <div class="aboutContainer">
+            <h1>Welcome to freeCodeCamp in <a target="_blank" href="https://www.freecodecamp.com/challenges/build-a-roguelike-dungeon-crawler-game">Roguelike Dungeon Crawler Form</a></h1>
+            <div class="content">
+            <p>Three certifications stand between you and the final boss. Each certification requires you to master 5 projects, each is harder than the last. You will recognize the projects because they look like this:</p>
+            <div class="challenges">
+                <img src="./assets/ia_100000001857.png" alt="Front End Challenges">
+                <img src="./assets/ia_100000001855.png" alt="Data Viz Challenges">
+                <img src="./assets/ia_100000001858.png" alt="Back End Challenges">
+            </div>
+            <p class="challengeNames">Front End — Data Viz  —  Back End</p>
+            <p>Collect tech skill items to level up your coding skills. Be careful, don't attempt the challenges without leveling up your skills. You can move with the arrow keys. If you think you are ready, click the freeCodeCamp Logo to begin.</p>
+            <p class="mobileMovement">(If you are on mobile, you can move by pressing on the left, top, right, and bottom areas of the game environment to move in those directions.)</p>
+            <img class="fccLogo" src="./assets/ia_100000002.png" alt="Enter Icon" @click="start">
+            </div>
+        </div>
+    </div>
+    <div class="pageWrapper" v-else >
+        <div class="header" id="headerBar">
+            <span></span>
+            <div class="headerWrapper">
+                <div id="headerSpacer"></div>
+                <p id="headerTitle">{{ headerText }}</p>
+            </div>
+        </div>
+        <div class="gameWrapper">
+            <div class="sideBar">
+                <div class="container">
+                    <p class="title">Palyer Stats</p>
+                    <p class="stat" >Level: {{ level }}</p>
+                    <p class="stat" >HP: {{ hp }}</p>
+                    <p class="stat" >Experience: {{ experience }}</p>
+                    <p class="stat" >Attack: {{ attack }}</p>
+                    <p class="stat" >Certifications: {{ certifications.length + "/3"}}</p>
+                    <p class="stat" >Skills: {{ skills.length + "/25"}}</p>
+                    <p class="stat certTitle"></p>
+                    <div class="certFlex"></div>
+                    <p class="stat skillsTitle"></p>
+                    <div class="skillsFlex"></div>
+                    <div class="soundContainer">
+                        <div class="soundControl">
+                            <p>Sound On</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="game" id="gameBoard">
+                <div class="map" id="gameSpace">
+                    <div class="gridItem" v-for="item in initMap" :style="conditionStyle(item)"></div>
+                </div>
+            </div>
+            <span>
+                <div class="replayPanel" id="replay" v-if="replay">
+                    <h1>Replay?</h1>
+                </div>
+            </span>
+        </div>
+    </div>
+</div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script>
+// Define Skill Items:
+let skills = {
+  'Bootstrap': ['./assets/skills/ia_100000385.png', 'You mastered responsive web design with Bootstrap!'],
+  'Bower': ['./assets/skills/ia_100000392.png', 'Your workflow skills improve with Bower!'],
+  'CamperBot': ['./assets/skills/ia_100000350.png', 'You completed a 100 day streak at freeCodeCamp! CamperBot joined your team!'],
+  'Codepen': ['./assets/skills/ia_100000001.png', 'Your project made the front page of Codepen! Respect!'],
+  'CSS3': ['./assets/skills/ia_100000434.png', 'You gained valuable style skills, you can now vertically center text!'],
+  'D3': ['./assets/skills/ia_100000441.png', 'You mastered D3 and now can transform arbitrary data into beautiful charts!'],
+  'ES6': ['./assets/skills/ia_100000336.png', 'You learned ES6! Your attack improves with fat arrow function skills!'],
+  'Git': ['./assets/skills/ia_100000427.png', 'You mastered git, your workflow continues to improve!'],
+  'Github': ['./assets/skills/ia_100000406.png', 'You contributed to Open Source! Octocat joined your team!'],
+  'Gitter': ['./assets/skills/ia_100000000.png', 'Campers gave you brownie points in Gitter Chat!'],
+  'Grunt': ['./assets/skills/ia_100000343.png', 'Your workflow is totally automated!'],
+  'Heroku': ['./assets/skills/ia_100000483.png', 'You\'re deploying apps from Heroku!'],
+  'HTML5': ['./assets/skills/ia_100000420.png', 'You\'ve become a master of HTML5!'],
+  'jQuery': ['./assets/skills/ia_100000469.png', 'You mastered jQuery! DOM selection is a piece of cake for you!'],
+  'Javascript': ['./assets/skills/ia_100000332.png', 'You learned about hoisting and callbacks in Javascript!'],
+  'MongoDB': ['./assets/skills/ia_100000357.png', 'You became a database champ with MongoDB!'],
+  'NodeJS': ['./assets/skills/ia_100000303.png', 'You started coding Javascript on the back end! You gained isomorphic attack power!'],
+  'React': ['./assets/skills/ia_100000310.png', 'You gained powerful Virtual DOM abilities! JSX has been added to your weapons list!'],
+  'Redux': ['./assets/skills/ia_100000476.png', 'You obtained Redux Superpowers! All of your items are now immutable!'],
+  'Sass': ['./assets/skills/ia_100000462.png', 'Your CSS has become Sassy!'],
+  'StackOverflow': ['./assets/skills/ia_100000448.png', 'You can finally vote on StackOverflow answers!'],
+  'Sublime': ['./assets/skills/ia_100000296.png', 'Your code editing skills are leveled up with Sublime Text!'],
+  'Terminal': ['./assets/skills/ia_100000371.png', 'You\'ve become a master of the command line!'],
+  'Twitter': ['./assets/skills/ia_100000490.png', 'Developers are following you on Twitter!'],
+  'Webpack': ['./assets/skills/ia_100000325.png', 'Your build skills are unmatched with Webpack! Gained Hot Reload as a Summon!'] };
+
+// Define Challenges:
+let challenges = {
+  'front-end-1': [150, 'You built a tribute page, congratulations!'],
+  'front-end-2': [250, 'You completed the Wikipedia Viewer project!'],
+  'front-end-3': [350, 'You finished the Pomodoro Clock! Your productivity rises by 3000 points!'],
+  'front-end-4': [450, 'You built a Tic Tac Toe Game! And wrote an unbeatable algorithm! Great work!'],
+  'front-end-5': [550, 'You built a Simon Game! Your skills are really looking good!'],
+  'data-viz-1': [550, 'You built a Markdown Previewer using React and Sass, impressive!'],
+  'data-viz-2': [700, 'You built a Recipe Box App! Your friends are getting jealous!'],
+  'data-viz-3': [850, 'You created stunning bar graphs, scatterplots, heatmaps, and force directed layouts with D3!'],
+  'data-viz-4': [900, 'You completed a Javascript version of Conway\'s Game of Life, mesmerizing!'],
+  'data-viz-5': [1050, 'You built a Roguelike Dungeon Crawler! Unbelievable!!!'],
+  'back-end-1': [1200, 'You created a File Metadata Microservice! Your friends are really jealous now!'],
+  'back-end-2': [1400, 'You created a Voting App, awesome!'],
+  'back-end-3': [1650, 'You built a Nightlife Coordination App! Party on!'],
+  'back-end-4': [1800, 'You created a Book Trading Club App! Your parents\' friends thank you!'],
+  'back-end-5': [2000, 'You built a Pinterest Clone! Bring on the Non-Profit Projects!'] };
+
+// Define boss HP:
+let bossHP = 1000000;
+
+// Image URLs for certification img tags:
+let certificationsList = {
+  'Front': './assets/ia_100000534.png',
+  'Viz': './assets/ia_100000524.png',
+  'Back': './assets/ia_100000544.png' };
+
+function handleKeyDown(curLoc, newLoc) {
+    // console.log(curLoc, newLoc);
+    if (app.arr[newLoc].cellType == 1) {
+        // 实心方块，不发生变化
+        return;
+    } else if (app.arr[newLoc].cellType == 0) {
+        // 空元素，则改变位置，或刷新地图
+    } else if (typeof newLoc.cellType == 'string') {}
+}
+
+function updateMap() {}
+
+let app = new Vue({
+    el: "#main",
+    data() {
+        return {
+            headerText: "",
+            isPlaying: false,
+            replay: false,
+            certifications: [],
+            skills: [],
+            level: 0,
+            hp: 0,
+            experience: 0,
+            attack: 0,
+            arr: [],
+            initMap: [],
+            userIndex: 0,
+            offset: 130,
+        }
+    },
+    methods: {
+        start() {
+            this.isPlaying = true;
+            this.generateMap();
+            // console.log(this.initMap);
+        },
+        conditionStyle(item) {
+            if (item.cellType == 1) {
+                return "background: rgba\(30, 30, 30);"
+            } else if (item.cellType == 'barrier') {
+                return "background: rgb\(255, 215, 64);"
+            } else if (item.cellType == 'boss') {
+                return "background: url('./assets/ia_100000001936.png') 0% 0% / cover;"
+            } else if (item.cellType == 'front') {
+                return "background: url('./assets/ia_100000001857.png') 0% 0% / cover;"
+            } else if (item.cellType == 'viz') {
+                return "background: url('./assets/ia_100000001855.png') 0% 0% / cover;"
+            } else if (item.cellType == 'back') {
+                return "background: url('./assets/ia_100000001858.png') 0% 0% / cover;"
+            } else if (item.cellType == 'Bootstrap') {
+                return `background: url(${skills.Bootstrap[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'Bower') {
+                return `background: url(${skills.Bower[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'CamperBot') {
+                return `background: url(${skills.CamperBot[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'Codepen') {
+                return `background: url(${skills.Codepen[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'CSS3') {
+                return `background: url(${skills.CSS3[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'D3') {
+                return `background: url(${skills.D3[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'ES6') {
+                return `background: url(${skills.ES6[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'Git') {
+                return `background: url(${skills.Git[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'Github') {
+                return `background: url(${skills.Github[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'Gitter') {
+                return `background: url(${skills.Gitter[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'Grunt') {
+                return `background: url(${skills.Grunt[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'Heroku') {
+                return `background: url(${skills.Heroku[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'HTML5') {
+                return `background: url(${skills.HTML5[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'jQuery') {
+                return `background: url(${skills.jQuery[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'Javascript') {
+                return `background: url(${skills.Javascript[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'MongoDB') {
+                return `background: url(${skills.MongoDB[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'NodeJS') {
+                return `background: url(${skills.NodeJS[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'React') {
+                return `background: url(${skills.React[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'Bootstrap') {
+                return `background: url(${skills.Bootstrap[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'Redux') {
+                return `background: url(${skills.Redux[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'Sass') {
+                return `background: url(${skills.Sass[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'StackOverflow') {
+                return `background: url(${skills.StackOverflow[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'Sublime') {
+                return `background: url(${skills.Sublime[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'Terminal') {
+                return `background: url(${skills.Terminal[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'Twitter') {
+                return `background: url(${skills.Twitter[0]}) 0% 0% / cover;`
+            } else if (item.cellType == 'Webpack') {
+                return `background: url(${skills.Webpack[0]}) 0% 0% / cover;`
+            } else if (item.user == 1) {
+                return "background: url('./assets/ia_100000002.png') 0% 0% / 51px 51px;"
+            } else if (item.cellType == 0) {
+                return "background: rgba\(20, 20, 20, 0.2)";
+            }
+        },
+        generateMap() {
+            for (let a=0; a< 2000; a++) {
+                let rand = Math.round(Math.random() * 5);
+                if (rand !== 1) {rand = 0;}
+                let user = 0;
+                // Set boss position at top of map:
+                if (a === 47 || a === 48 || a === 49 || a === 50 || a === 67 || a === 70 || a === 87 || a === 90 || a === 107 || a === 108 || a === 109 || a === 110) {rand = 'barrier';} else
+                if (a === 68 || a === 69 || a === 88 || a === 89) {rand = 'boss';}
+                // Set user position:
+                else if (a === 1890) {rand = 0;user = 1;this.userIndex = a;}
+                this.arr[a] = {
+                    cellSize: 50,
+                    cellType: rand,
+                    user: user };
+            }
+
+    let randNum;
+    let challengeLimit = 15;
+
+    let b = 0;
+    while (b < challengeLimit) {
+      randNum = 100 + 1800 - Math.round(Math.random() * 1800);
+      // Do not place a challenge on the user:
+      if (randNum !== 1890) {
+        // Only use empty cells:
+        if (this.arr[randNum].cellType === 0) {
+          // Avoid 'boss' and 'barrier' cells:
+          if (typeof this.arr[randNum - 1].cellType !== 'string' && typeof this.arr[randNum + 1].cellType !== 'string' && typeof this.arr[randNum - 20].cellType !== 'string' && typeof this.arr[randNum + 20].cellType !== 'string') {
+            // Avoid inaccessible cells:
+            if (this.arr[randNum - 1].cellType === 0 && this.arr[randNum + 1].cellType === 0 && this.arr[randNum - 20].cellType === 0 && this.arr[randNum + 20].cellType === 0) {
+              // Fifteen challenges are distributed, 5 for each certification:
+              if (b < 5) {
+                this.arr[randNum].cellType = "front";
+                b++;
+              } else
+              if (b < 10) {
+                this.arr[randNum].cellType = "viz";
+                b++;
+              } else
+              {
+                this.arr[randNum].cellType = "back";
+                b++;
+              }
+            }
+          }
+        }
+      }
+      // If the above conditions are not satisfied for the given random number, return and try again:
+      else {
+          continue;
+        }
+    }
+
+    // Get the names of all the skill items from the skills object:
+    let skillsArray = [];
+    for (let key in skills) {
+      skillsArray.push(key);
+    }
+
+    let c = 0;
+    while (c < skillsArray.length) {
+      randNum = 100 + 1800 - Math.round(Math.random() * 1800);
+      // Do not place a challenge on the user:
+      if (randNum !== 1890) {
+        // Cell must be empty and not contain a challenge
+        if (this.arr[randNum].cellType === 0 && typeof this.arr[randNum].cellType !== 'string') {
+          // Avoid 'boss' and 'barrier' cells:
+          if (typeof this.arr[randNum - 1].cellType !== 'string' && typeof this.arr[randNum + 1].cellType !== 'string' && typeof this.arr[randNum - 20].cellType !== 'string' && typeof this.arr[randNum + 20].cellType !== 'string') {
+            // Avoid inaccessible cells:
+            if (this.arr[randNum - 1].cellType === 0 && this.arr[randNum + 1].cellType === 0 && this.arr[randNum - 20].cellType === 0 && this.arr[randNum + 20].cellType === 0) {
+              this.arr[randNum].cellType = skillsArray[c];
+              c++;
+            }
+          }
+        }
+      }
+      // If the above conditiosn are not satisfied for the given random number, return and try again:
+      else {
+          continue;
+        }
+    }
+
+    // A slice of the map data is made for the viewing window:
+    this.initMap = this.arr.slice(this.userIndex - 130, this.arr.length);
+
+        },
+    },
+
+})
+
+document.addEventListener('keydown', (e) => {
+    e.preventDefault();
+    if (e.keyCode == 37){
+        if (app.userIndex >= 1) {
+        handleKeyDown(app.userIndex, app.userIndex - 1);
+        }
+    } else if (e.keyCode == 38) {
+        if (app.userIndex >= 20) {
+        handleKeyDown(app.userIndex, app.userIndex - 20);
+        }
+    } else if (e.keyCode == 39) {
+        if (app.userIndex <= 1998) {
+        handleKeyDown(app.userIndex, app.userIndex + 1);
+        }
+    } else if (e.keyCode == 40) {
+        if (app.userIndex <= 1979) {
+        handleKeyDown(app.userIndex, app.userIndex + 20);
+        }
+    }
+})
+
+</script>
+</html>
