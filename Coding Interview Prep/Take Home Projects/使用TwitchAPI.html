@@ -36,7 +36,6 @@
 </body>
   <!-- import Vue before Element -->
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-<!-- 用本地的那个版本,会出错 -->
 <script src="https://unpkg.com/element-ui/lib/index.js"></script>
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script>
@@ -51,8 +50,6 @@ let app = new Vue({
                 {value:'offline',label:'Offline'}
             ],
             member: []
-            // 存储数据的数组放在这里,created 后, 生成观察者包装器, 页面拿不到数据, 就八个空元素
-            // 问题出在 请求上, 数据还没拿到, 空对象已经被添加到数组中去了.
         }
     },
     computed: {
@@ -69,9 +66,6 @@ let app = new Vue({
             });
         }
     },
-    // 原来的问题就出在,变量已经添加进去了,但是数据还没获取到
-    // 解决办法就是, axios.all 并发操作
-    // 或者,通过声明函数为异步操作,到了要执行 await 的请求操作时, 停在这里,
     async created() {
         let channels = ["ESL_SC2", "OgamingSC2", "cretetion", "freecodecamp", "storbeck", "habathcx", "RobotCaleb", "noobs2ninjas"];
         function makeUrl(type, name) {

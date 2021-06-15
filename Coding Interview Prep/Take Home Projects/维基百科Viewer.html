@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./style/wikiViewer.css">
-    <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
     <title>Wiki Viewer</title>
 </head>
 <body>
@@ -43,8 +43,6 @@ let app = new Vue({
             results: [],
         }
     },
-    // 要在元素挂载之前，进行事件绑定
-    // 在挂载之后，进行运行阶段，没有交互事件
     created() {
         let form = $("form");
         let close = $(".eks");
